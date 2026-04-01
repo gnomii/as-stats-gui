@@ -15,15 +15,15 @@ if (!preg_match("/^[0-9a-zA-Z][0-9a-zA-Z\-_]+$/", $link))
 	die("Invalid link");
 
 $v6_el = "";
-if (@$_GET['v'] == 6)
+if (($_GET['v'] ?? '') == 6)
 	$v6_el = "v6_";
 
 $hours = 24;
-if (@$_GET['numhours'])
+if (!empty($_GET['numhours']))
 	$hours = (int)$_GET['numhours'];
 
 $statsfile = statsFileForHours($hours);
-if (@$_GET['v'] == 6) {
+if (($_GET['v'] ?? '') == 6) {
 	$topas = getasstats_top($numtop, $statsfile, array($_GET['link']), $list_asn = NULL, $v=6);
 }else {
 	$topas = getasstats_top($numtop, $statsfile, array($_GET['link']));
@@ -34,9 +34,9 @@ header("Content-Type: image/png");
 
 $width = $default_graph_width;
 $height = $default_graph_height;
-if (@$_GET['width'])
+if (!empty($_GET['width']))
 	$width = (int)$_GET['width'];
-if (@$_GET['height'])
+if (!empty($_GET['height']))
 	$height = (int)$_GET['height'];
 
 $knownlinks = getknownlinks();
@@ -65,7 +65,7 @@ if ($vertical_label) {
 		$cmd .= "--vertical-label '<- OUT | IN ->' ";
 }
 
-if($showtitledetail && @$_GET['dname'] != "")
+if ($showtitledetail && !empty($_GET['dname']))
 	$cmd .= "--title " . escapeshellarg($_GET['dname']) . " ";
 else
 	if (isset($_GET['v']) && is_numeric($_GET['v']))
@@ -93,7 +93,7 @@ foreach ($topas as $as => $traffic) {
 $i = 0;
 foreach ($topas as $as => $traffic) {
 	$asinfo = getASInfo($as);
-	$descr = str_replace(":", "\\:", utf8_decode($asinfo['descr']));
+	$descr = str_replace(":", "\\:", mb_convert_encoding($asinfo['descr'], 'ISO-8859-1', 'UTF-8'));
 	$descr = str_replace('"', '\\"', $descr);
 
 	$cmd .= "AREA:as{$as}_{$v6_el}in_bits#{$ascolors[$i]}:\"AS{$as} ({$descr})\\n\"";

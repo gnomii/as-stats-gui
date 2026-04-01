@@ -11,7 +11,7 @@ $hours = 24;
 if (isset($_GET['ix'])) { $ix_id = (int)$_GET['ix']; } else { $ix_id = ""; }
 if (isset($_GET['name_ix'])) { $name_ix = $ix_name = $_GET['name_ix']; } else { $name_ix = $ix_name =""; }
 
-if (@$_GET['numhours']) $hours = (int)$_GET['numhours'];
+if (!empty($_GET['numhours'])) $hours = (int)$_GET['numhours'];
 if ($peerusage) {
   $statsfile = $daypeerstatsfile;
 } else {
@@ -23,9 +23,6 @@ $label = statsLabelForHours($hours);
 $knownlinks = getknownlinks();
 $selected_links = array();
 
-// Mobile Detect for show legend
-$detect = new Mobile_Detect;
-
 foreach($knownlinks as $link){
 	if(isset($_GET["link_${link['tag']}"]))
 		$selected_links[] = $link['tag'];
@@ -34,7 +31,7 @@ foreach($knownlinks as $link){
 if ($showv6) { $first_col = "1"; $second_col = "11"; $offset_second_col = "0";  } else { $first_col = "2"; $second_col = "9"; $offset_second_col = "1"; }
 
 // LEGEND
-if ( !$detect->isMobile() && !$detect->isTablet() ) {
+if ( !isMobileDevice() && !isTabletDevice() ) {
   $aff_legend = "<table class='small'>";
 
   foreach ($knownlinks as $link) {
@@ -131,8 +128,10 @@ if ( $ix_id ) {
 	  $aff_astable .= '<li class="li-padding '. $class .'">';
 
 	  // FLAGS
+	  $img_flag = '';
+	  $flagfile = '';
 	  if ( isset($asinfo['country']) ) $flagfile = "flags/" . strtolower($asinfo['country']) . ".gif";
-	  if (file_exists($flagfile)) {
+	  if ($flagfile && file_exists($flagfile)) {
 	    $is = getimagesize($flagfile);
 	    $img_flag = '<img src="'.$flagfile.'" '.$is[3].'>';
 	  }
@@ -231,7 +230,7 @@ if ( $ix_id ) {
 					<div class="row">
 						<div class="col-lg-12">
               <?php
-                if ( $detect->isMobile() || $detect->isTablet() ) {
+                if ( isMobileDevice() || isTabletDevice() ) {
               ?>
 
               <form method='get'>

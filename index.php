@@ -6,7 +6,7 @@ if (isset($_GET['n'])) $ntop = (int)$_GET['n'];
 if ($ntop > 200) $ntop = 200;
 $hours = 24;
 
-if (@$_GET['numhours']) $hours = (int)$_GET['numhours'];
+if (!empty($_GET['numhours'])) $hours = (int)$_GET['numhours'];
 if ($peerusage) {
   $statsfile = $daypeerstatsfile;
 } else {
@@ -28,9 +28,6 @@ $end = time();
 
 if ($showv6) { $first_col = "1"; $second_col = "11"; $offset_second_col = "0";  } else { $first_col = "2"; $second_col = "9"; $offset_second_col = "1"; }
 
-// Mobile Detect for show legend
-$detect = new Mobile_Detect;
-
 $i = 0;
 $aff_astable = '<ul class="nav nav-stacked">';
 
@@ -41,8 +38,10 @@ foreach ($topas as $as => $nbytes) {
   $aff_astable .= '<li class="li-padding '. $class .'">';
 
   // FLAGS
+  $img_flag = '';
+  $flagfile = '';
   if ( isset($asinfo['country']) ) $flagfile = "flags/" . strtolower($asinfo['country']) . ".gif";
-  if (file_exists($flagfile)) {
+  if ($flagfile && file_exists($flagfile)) {
     $is = getimagesize($flagfile);
     $img_flag = '<img src="'.$flagfile.'" '.$is[3].'>';
   }
@@ -98,7 +97,7 @@ foreach ($topas as $as => $nbytes) {
 $aff_astable .= '</ul>';
 
 // LEGEND
-if ( !$detect->isMobile() && !$detect->isTablet() ) {
+if ( !isMobileDevice() && !isTabletDevice() ) {
   $aff_legend = "<table class='small'>";
 
   foreach ($knownlinks as $link) {
@@ -192,7 +191,7 @@ if ( !$detect->isMobile() && !$detect->isTablet() ) {
 
             <div class="col-lg-12">
               <?php
-                if ( $detect->isMobile() || $detect->isTablet() ) {
+                if ( isMobileDevice() || isTabletDevice() ) {
               ?>
 
               <form method='get'>

@@ -1,7 +1,15 @@
 <?php
 require_once("config_defaults.inc");
 require_once('config.inc');
-require_once('plugins/mobile-detect/Mobile_Detect.php');
+function isMobileDevice() {
+	$ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+	return (bool) preg_match('/Mobile|Android.*Mobile|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i', $ua);
+}
+
+function isTabletDevice() {
+	$ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+	return (bool) preg_match('/iPad|Android(?!.*Mobile)|Tablet|Kindle|Silk/i', $ua);
+}
 
 //Class Autoloader
 spl_autoload_register(function ($className) {
@@ -24,7 +32,7 @@ function getASInfo($asnum) {
 	if (!isset($asinfodb))
 		$asinfodb = readasinfodb();
 
-	if (@$asinfodb[$asnum])
+	if (!empty($asinfodb[$asnum]))
 		return $asinfodb[$asnum];
 	else
 		return array('name' => "AS$asnum", 'descr' => "AS $asnum");
@@ -47,7 +55,7 @@ function readasinfodb() {
 		$asn = $asnarr[0];
 		$asname = $asnarr[1];
 		$descr = $asnarr[2];
-		if (isset($asnarr[3])) $country = $asnarr[3];
+		$country = isset($asnarr[3]) ? $asnarr[3] : '';
 
 		$asinfodb[$asn] = array(
 			'name' => $asname,
@@ -62,14 +70,18 @@ function readasinfodb() {
 
 function getknownlinks() {
 	global $knownlinksfile;
+	if (!file_exists($knownlinksfile)) return array();
 	$fd = fopen($knownlinksfile, "r");
+	if ($fd === false) return array();
 	$knownlinks = array();
 	while (!feof($fd)) {
 		$line = trim(fgets($fd));
 		if (preg_match("/(^\\s*#)|(^\\s*$)/", $line))
 			continue;	/* empty line or comment */
 
-		list($routerip,$ifindex,$tag,$descr,$color) = preg_split("/\\t+/", $line);
+		$parts = preg_split("/\\t+/", $line);
+		if (!is_array($parts) || count($parts) < 5) continue;
+		list($routerip,$ifindex,$tag,$descr,$color) = $parts;
 		$known = false;
 		foreach ($knownlinks as $link) {
 		    if (in_array($tag,$link)) {$known=true;}
@@ -174,7 +186,7 @@ function getASSET($asset) {
 
 	$assetfile = $assetpath."/".$asset.".txt";
 	# check if file exist and cache
-	$filemtime = @filemtime($assetfile);
+	$filemtime = file_exists($assetfile) ? filemtime($assetfile) : false;
 	if (!$filemtime or (time() - $filemtime >= $asset_cache_life)) {
   	$cmd = $whois ." -h whois.radb.net '!i".$asset."'";
     $return_aslist = explode("\n",shell_exec($cmd));
@@ -254,7 +266,7 @@ function getHTMLImg($as, $ipversion, $desc, $start, $end, $peerusage, $alt, $cla
 function statsFileForHours($hours) {
 	global $top_intervals, $daystatsfile;
 	foreach ($top_intervals as $interval) {
-		if ($interval['hours'] == $hours && @$interval['statsfile']) {
+		if ($interval['hours'] == $hours && isset($interval['statsfile'])) {
 			return $interval['statsfile'];
 		}
 	}
@@ -264,7 +276,7 @@ function statsFileForHours($hours) {
 function statsLabelForHours($hours) {
 	global $top_intervals;
 	foreach ($top_intervals as $interval) {
-		if ($interval['hours'] == $hours && @$interval['label']) {
+		if ($interval['hours'] == $hours && isset($interval['label'])) {
 			return $interval['label'];
 		}
 	}

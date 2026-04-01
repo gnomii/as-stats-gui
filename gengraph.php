@@ -20,7 +20,7 @@ if (isset($_GET['width']))
 if (isset($_GET['height']))
 	$height = (int)$_GET['height'];
 $v6_el = "";
-if (@$_GET['v'] == 6)
+if (($_GET['v'] ?? '') == 6)
 	$v6_el = "v6_";
 
 if(isset($_GET['peerusage']) && $_GET['peerusage'] == '1')
@@ -75,7 +75,7 @@ if ($vertical_label) {
 		$cmd .= "--vertical-label '<- OUT | IN ->' ";
 }
 
-if($showtitledetail && @$_GET['dname'] != "")
+if ($showtitledetail && !empty($_GET['dname']))
 	$cmd .= "--title " . escapeshellarg($_GET['dname']) . " ";
 else
 	if (isset($_GET['v']) && is_numeric($_GET['v']))

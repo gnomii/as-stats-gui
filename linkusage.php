@@ -4,7 +4,7 @@
 $selected_links = array();
 $knownlinks = getknownlinks();
 $hours = 24;
-if (@$_GET['numhours'])
+if (!empty($_GET['numhours']))
 	$hours = (int)$_GET['numhours'];
 $label = statsLabelForHours($hours);
 $i = 0;

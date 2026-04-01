@@ -8,7 +8,7 @@ $aff_customlinks = $aff_otheras = $aff_toolsbox_add = $aff_legend = "";
 if(!isset($peerusage)) $peerusage = 0;
 
 $hours = 24;
-if (@$_GET['numhours']) $hours = (int)$_GET['numhours'];
+if (!empty($_GET['numhours'])) $hours = (int)$_GET['numhours'];
 if ($peerusage) {
   $statsfile = $daypeerstatsfile;
 } else {
@@ -124,8 +124,10 @@ if ( $asset ) {
       $aff_astable .= '<li class="li-padding '. $class .'">';
 
       // FLAGS
+      $img_flag = '';
+      $flagfile = '';
       if ( isset($asinfo['country']) ) $flagfile = "flags/" . strtolower($asinfo['country']) . ".gif";
-      if (file_exists($flagfile)) {
+      if ($flagfile && file_exists($flagfile)) {
         $is = getimagesize($flagfile);
         $img_flag = '<img src="'.$flagfile.'" '.$is[3].'>';
       }
