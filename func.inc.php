@@ -184,7 +184,7 @@ function format_bytes($bytes) {
 function getRRDFileForAS($as, $peer = 0) {
 	global $rrdpath;
 	$prefix = ($peer == 1) ? "$rrdpath/peeras" : "$rrdpath";
-	return "$prefix/" . sprintf("%02x", $as % 256) . "/$as.rrd";
+	return "$prefix/" . sprintf("%02x", $as % 256) . "/AS$as.rrd";
 }
 
 function getASSET($asset) {
