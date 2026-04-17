@@ -130,6 +130,7 @@ function getasstats_top($ntop, $statfile, $selected_links, $list_asn = NULL, $v 
 			$query_total .= " + {$tag}_v6_in + {$tag}_v6_out";
 		}
 	}
+	$query_links = rtrim($query_links, ', ');
   if ( $list_asn ) {
     $where = implode(",", array_map('intval', $list_asn));
     $query = "SELECT asn, $query_links $query_total as total FROM stats WHERE asn IN ( $where ) ORDER BY total desc limit $ntop";
