@@ -7,6 +7,13 @@
 
 require_once('func.inc.php');
 
+$debug_file = '/tmp/gengraph_debug.log';
+
+function debug_log($msg) {
+	global $debug_file;
+	file_put_contents($debug_file, date('Y-m-d H:i:s') . " - $msg\n", FILE_APPEND);
+}
+
 $as = $_GET['as'];
 if (!preg_match("/^\d+$/", $as))
 	die("Invalid AS");
@@ -59,7 +66,7 @@ if(isset($_GET['selected_links'])){
 $rrdfile = getRRDFileForAS($as, $peerusage);
 
 if (!file_exists($rrdfile)) {
-	error_log("RRD file not found: $rrdfile for AS $as");
+	debug_log("RRD file not found: $rrdfile for AS $as");
 	die("RRD file not found");
 }
 
@@ -197,12 +204,14 @@ if ($show95th && !$compat_rrdtool12) {
 # zero line
 $cmd .= "HRULE:0#00000080";
 
+debug_log("RRDtool command for AS $as: $cmd");
+
 $output = shell_exec($cmd . " 2>&1");
 $exit_code = 0;
 if ($output === null || strpos($output, "\x89PNG") !== 0) {
-	error_log("RRDtool graph generation failed for AS $as");
-	error_log("Command: $cmd");
-	error_log("Output: " . substr($output, 0, 500));
+	debug_log("RRDtool graph generation failed for AS $as");
+	debug_log("Command: $cmd");
+	debug_log("Output: " . substr($output, 0, 500));
 
 	if (!empty($output) && strpos($output, "\x89PNG") === false) {
 		header("Content-Type: text/plain");

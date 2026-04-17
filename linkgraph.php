@@ -7,6 +7,13 @@
 
 require_once('func.inc.php');
 
+$debug_file = '/tmp/linkgraph_debug.log';
+
+function debug_log($msg) {
+	global $debug_file;
+	file_put_contents($debug_file, date('Y-m-d H:i:s') . " - $msg\n", FILE_APPEND);
+}
+
 $numtop = 10;
 $ascolors = array("A6CEE3", "1F78B4", "B2DF8A", "33A02C", "FB9A99", "E31A1C", "FDBF6F", "FF7F00", "CAB2D6", "6A3D9A");
 
@@ -118,9 +125,9 @@ $cmd .= "HRULE:0#00000080";
 
 $output = shell_exec($cmd . " 2>&1");
 if ($output === null || strpos($output, "\x89PNG") !== 0) {
-	error_log("RRDtool link graph generation failed for link " . $_GET['link']);
-	error_log("Command: $cmd");
-	error_log("Output: " . substr($output, 0, 500));
+	debug_log("RRDtool link graph generation failed for link " . $_GET['link']);
+	debug_log("Command: $cmd");
+	debug_log("Output: " . substr($output, 0, 500));
 
 	if (!empty($output) && strpos($output, "\x89PNG") === false) {
 		header("Content-Type: text/plain");

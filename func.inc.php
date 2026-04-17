@@ -140,8 +140,8 @@ function getasstats_top($ntop, $statfile, $selected_links, $list_asn = NULL, $v 
   }
 	$asn = $db->query($query);
 	if (!$asn) {
-		error_log("SQL query failed: " . $db->lastErrorMsg());
-		error_log("Query: $query");
+		$msg = "SQL query failed: " . $db->lastErrorMsg() . " | Query: $query";
+		file_put_contents('/tmp/as-stats-debug.log', date('Y-m-d H:i:s') . " - $msg\n", FILE_APPEND);
 		return array();
 	}
 	$asstats = array();
