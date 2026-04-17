@@ -1,4 +1,4 @@
-<?php include("func.inc"); ?>
+<?php include("func.inc.php"); ?>
 
 <?php
 if(!isset($peerusage)) $peerusage = 0;

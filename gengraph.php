@@ -5,7 +5,7 @@
  * written by Manuel Kasper <mk@neon1.net> for Monzoon Networks AG
  */
 
-require_once('func.inc');
+require_once('func.inc.php');
 
 $as = $_GET['as'];
 if (!preg_match("/^[0-9a-zA-Z]+$/", $as))

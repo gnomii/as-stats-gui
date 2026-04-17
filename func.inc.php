@@ -1,6 +1,6 @@
 <?php
-require_once("config_defaults.inc");
-require_once('config.inc');
+require_once("config_defaults.inc.php");
+require_once('config.inc.php');
 function isMobileDevice() {
 	$ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
 	return (bool) preg_match('/Mobile|Android.*Mobile|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i', $ua);

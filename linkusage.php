@@ -1,4 +1,4 @@
-<?php include("func.inc"); ?>
+<?php include("func.inc.php"); ?>
 
 <?php
 $selected_links = array();

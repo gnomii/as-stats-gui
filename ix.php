@@ -1,4 +1,4 @@
-<?php include("func.inc"); ?>
+<?php include("func.inc.php"); ?>
 
 <?php
 $aff_astable = $select_topinterval = "";

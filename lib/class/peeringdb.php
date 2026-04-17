@@ -1,8 +1,8 @@
 <?php
-if ( file_exists('../../config.inc') ) {
-  require_once '../../config.inc';
-} elseif ( file_exists('config.inc') ) {
-  require_once 'config.inc';
+if ( file_exists('../../config.inc.php') ) {
+  require_once '../../config.inc.php';
+} elseif ( file_exists('config.inc.php') ) {
+  require_once 'config.inc.php';
 }
 
 class PeeringDB {

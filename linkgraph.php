@@ -5,7 +5,7 @@
  * written by Manuel Kasper <mk@neon1.net> for Monzoon Networks AG
  */
 
-require_once('func.inc');
+require_once('func.inc.php');
 
 $numtop = 10;
 $ascolors = array("A6CEE3", "1F78B4", "B2DF8A", "33A02C", "FB9A99", "E31A1C", "FDBF6F", "FF7F00", "CAB2D6", "6A3D9A");
