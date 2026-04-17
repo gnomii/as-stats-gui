@@ -131,13 +131,19 @@ function getasstats_top($ntop, $statfile, $selected_links, $list_asn = NULL, $v 
 		}
 	}
 	$query_links = rtrim($query_links, ', ');
+	$columns = $query_links ? "$query_links, " : "";
   if ( $list_asn ) {
     $where = implode(",", array_map('intval', $list_asn));
-    $query = "SELECT asn, $query_links $query_total as total FROM stats WHERE asn IN ( $where ) ORDER BY total desc limit $ntop";
+    $query = "SELECT asn, $columns $query_total as total FROM stats WHERE asn IN ( $where ) ORDER BY total desc limit $ntop";
   } else {
-	  $query = "select asn, $query_links $query_total as total from stats order by total desc limit $ntop";
+	  $query = "select asn, $columns $query_total as total from stats order by total desc limit $ntop";
   }
 	$asn = $db->query($query);
+	if (!$asn) {
+		error_log("SQL query failed: " . $db->lastErrorMsg());
+		error_log("Query: $query");
+		return array();
+	}
 	$asstats = array();
 	while($row = $asn->fetchArray()){
 		$tot_in = 0;
