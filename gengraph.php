@@ -8,8 +8,10 @@
 require_once('func.inc.php');
 
 $as = $_GET['as'];
-if (!preg_match("/^[0-9a-zA-Z]+$/", $as))
+if (!preg_match("/^\d+$/", $as))
 	die("Invalid AS");
+
+$as = (int)$as;
 
 header("Content-Type: image/png");
 
@@ -40,6 +42,9 @@ if(isset($_GET['selected_links'])){
       if (preg_match('/[^a-zA-Z0-9_]/', $tag))
           continue;
 
+      if (!isset($reverse[$tag]))
+          continue;
+
       $link = array(
         'tag' => $tag,
         'color' => $reverse[$tag]['color'],
@@ -52,6 +57,11 @@ if(isset($_GET['selected_links'])){
 }
 
 $rrdfile = getRRDFileForAS($as, $peerusage);
+
+if (!file_exists($rrdfile)) {
+	error_log("RRD file not found: $rrdfile for AS $as");
+	die("RRD file not found");
+}
 
 if ($compat_rrdtool12) {
 	/* cannot use full-size-mode - must estimate height/width */
@@ -187,8 +197,24 @@ if ($show95th && !$compat_rrdtool12) {
 # zero line
 $cmd .= "HRULE:0#00000080";
 
-passthru($cmd);
+$output = shell_exec($cmd . " 2>&1");
+$exit_code = 0;
+if ($output === null || strpos($output, "\x89PNG") !== 0) {
+	error_log("RRDtool graph generation failed for AS $as");
+	error_log("Command: $cmd");
+	error_log("Output: " . substr($output, 0, 500));
 
+	if (!empty($output) && strpos($output, "\x89PNG") === false) {
+		header("Content-Type: text/plain");
+		echo "Graph generation error:\n";
+		echo substr($output, 0, 1000);
+		exit(1);
+	}
+
+	die("Graph generation failed");
+}
+
+echo $output;
 exit;
 
 ?>

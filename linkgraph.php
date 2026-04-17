@@ -116,8 +116,23 @@ foreach ($topas as $as => $traffic) {
 # zero line
 $cmd .= "HRULE:0#00000080";
 
-passthru($cmd);
+$output = shell_exec($cmd . " 2>&1");
+if ($output === null || strpos($output, "\x89PNG") !== 0) {
+	error_log("RRDtool link graph generation failed for link " . $_GET['link']);
+	error_log("Command: $cmd");
+	error_log("Output: " . substr($output, 0, 500));
 
+	if (!empty($output) && strpos($output, "\x89PNG") === false) {
+		header("Content-Type: text/plain");
+		echo "Graph generation error:\n";
+		echo substr($output, 0, 1000);
+		exit(1);
+	}
+
+	die("Graph generation failed");
+}
+
+echo $output;
 exit;
 
 ?>
