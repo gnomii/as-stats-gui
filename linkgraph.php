@@ -139,6 +139,31 @@ if ($output === null || strpos($output, "\x89PNG") !== 0) {
 	die("Graph generation failed");
 }
 
+$output_size = strlen($output);
+debug_log("PNG output size: $output_size bytes");
+
+// Detect mostly empty images (smaller than ~2KB = likely blank)
+if ($output_size < 2048) {
+	debug_log("WARNING: Image suspiciously small, likely blank/no data");
+	header("Content-Type: text/html; charset=UTF-8");
+	?>
+	<html>
+	<head><title>No Data Available</title></head>
+	<body style="font-family: Arial; padding: 20px;">
+		<h2>No Data Available</h2>
+		<p>Link <strong><?php echo htmlspecialchars($_GET['link']); ?></strong> has no traffic data available.</p>
+		<p style="color: #666; font-size: 0.9em;">
+			This usually means:<br>
+			- No traffic has been seen on this link<br>
+			- Data collection for this link is not configured<br>
+			- The link is not currently active
+		</p>
+	</body>
+	</html>
+	<?php
+	exit;
+}
+
 echo $output;
 exit;
 
