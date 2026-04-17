@@ -19,7 +19,7 @@ $knownlinks = getknownlinks();
 $selected_links = array();
 
 foreach($knownlinks as $link){
-	if(isset($_GET["link_${link['tag']}"]))
+	if(isset($_GET["link_{$link['tag']}"]))
 		$selected_links[] = $link['tag'];
 }
 $topas = getasstats_top($ntop, $statsfile, $selected_links);
@@ -32,65 +32,7 @@ $i = 0;
 $aff_astable = '<ul class="nav nav-stacked">';
 
 foreach ($topas as $as => $nbytes) {
-  $asinfo = getASInfo($as);
-  $class = (($i % 2) == 0) ? "" : "even";
-
-  $aff_astable .= '<li class="li-padding '. $class .'">';
-
-  // FLAGS
-  $img_flag = '';
-  $flagfile = '';
-  if ( isset($asinfo['country']) ) $flagfile = "flags/" . strtolower($asinfo['country']) . ".gif";
-  if ($flagfile && file_exists($flagfile)) {
-    $is = getimagesize($flagfile);
-    $img_flag = '<img src="'.$flagfile.'" '.$is[3].'>';
-  }
-
-  $aff_astable .= '<div class="row">';
-
-  $aff_astable .= '<div class="col-lg-2">';
-  $aff_astable .= '<b>' . $img_flag . ' AS' . $as . ': </b><small><i>' . $asinfo['descr'] . '</i></small>';
-
-  $aff_astable .= '<div class="small">In the last '. $label . '</div>';
-  $aff_astable .= '<div class="small">IPv4: ~ '.format_bytes($nbytes[0]).' in / ' . format_bytes($nbytes[1]) . '</div>';
-  if ($showv6) {
-    $aff_astable .= '<div class="small">IPv6: ~ '.format_bytes($nbytes[2]).' in / ' . format_bytes($nbytes[3]) . '</div>';
-  }
-
-  // CUSTOM LINKS
-  $htmllinks = array();
-  foreach ($customlinks as $linkname => $url) {
-  	$url = str_replace("%as%", $as, $url);
-  	$htmllinks[] = "<a href=\"$url\" target=\"_blank\">" . htmlspecialchars($linkname) . "</a>\n";
-  }
-  $aff_astable .= '<span class="small">' . join(" | ", $htmllinks) . '</span>';
-
-  // RANK
-  $aff_astable .= '<div class="rank">';
-	$aff_astable .= '#' . ($i+1);
-	$aff_astable .= '</div>';
-
-  $aff_astable .= '</div>';
-
-  if ($showv6) { $col = "5"; } else { $col="10"; }
-  $aff_astable .= '<div class="col-lg-'.$col.'">';
-  $aff_astable .= '<span class="pull-right">';
-  $aff_astable .= getHTMLUrl($as, 4, $asinfo['descr'], $start, $end, $peerusage, $selected_links);
-  $aff_astable .= '</span>';
-  $aff_astable .= '</div>';
-
-  if ($showv6) {
-    $aff_astable .= '<div class="col-lg-5">';
-    $aff_astable .= '<span class="pull-right">';
-    $aff_astable .= getHTMLUrl($as, 6, $asinfo['descr'], $start, $end, $peerusage, $selected_links);
-    $aff_astable .= '</span>';
-    $aff_astable .= '</div>';
-  }
-
-  $aff_astable .= '</div>';
-
-  $aff_astable .= '</li>';
-
+  $aff_astable .= renderASRow($as, $nbytes, $i, $start, $end, $peerusage, $selected_links, $label, $showv6, $customlinks);
   $i++;
 }
 
@@ -98,84 +40,24 @@ $aff_astable .= '</ul>';
 
 // LEGEND
 if ( !isMobileDevice() && !isTabletDevice() ) {
-  $aff_legend = "<table class='small'>";
-
-  foreach ($knownlinks as $link) {
-    $tag = "link_${link['tag']}";
-
-    $checked = '';
-    if(isset($_GET[$tag]) && $_GET[$tag] == 'on') {
-      $checked = 'checked';
-    }
-
-  	$aff_legend .= "<tr><td style=\"border: 4px solid #fff;\">";
-
-  	$aff_legend .= "<table style=\"border-collapse: collapse; margin: 0; padding: 0\"><tr>";
-    if ($brighten_negative) {
-  		$aff_legend .= "<td width=\"9\" height=\"18\" style=\"background-color: #{$link['color']}\">&nbsp;</td>";
-  		$aff_legend .= "<td width=\"9\" height=\"18\" style=\"opacity: 0.73; background-color: #{$link['color']}\">&nbsp;</td>";
-  	} else {
-  		$aff_legend .= "<td width=\"18\" height=\"18\" style=\"background-color: #{$link['color']}\">&nbsp;</td>";
-  	}
-  	$aff_legend .= "</tr></table>";
-
-  	$aff_legend .= "</td><td>&nbsp;" . $link['descr'] . "</td>";
-    $aff_legend .= "<td>&nbsp;<input type='checkbox' name='".$tag."' id ='".$tag."' ".$checked."></td>";
-    $aff_legend .= "</tr>\n";
-  }
-
-  $aff_legend .= "</table>";
+  $aff_legend = buildLegend($knownlinks, $selected_links, "desktop", $brighten_negative);
 } else {
   $aff_legend = "<table class='small'>";
   $aff_legend .= "<tr>";
   $aff_legend .= "<td style=\"border: 4px solid #fff;\">";
-
   $aff_legend .= "<table style=\"border-collapse: collapse; margin: 0; padding: 0\"><tr>";
-  foreach ($knownlinks as $link) {
-    $tag = "link_${link['tag']}";
-
-    $checked = '';
-    if(isset($_GET[$tag]) && $_GET[$tag] == 'on') {
-      $checked = 'checked';
-    }
-
-    if ($brighten_negative) {
-  		$aff_legend .= "<td width=\"9\" height=\"18\" style=\"background-color: #{$link['color']}\">&nbsp;</td>";
-  		$aff_legend .= "<td width=\"9\" height=\"18\" style=\"opacity: 0.73; background-color: #{$link['color']}\">&nbsp;</td>";
-  	} else {
-  		$aff_legend .= "<td width=\"18\" height=\"18\" style=\"background-color: #{$link['color']}\">&nbsp;</td>";
-  	}
-    $aff_legend .= "<td>&nbsp;" . $link['descr'] . "&nbsp;</td>\n";
-
-    $aff_legend .= "<td>&nbsp;<input type='checkbox' name='".$tag."' id ='".$tag."' ".$checked.">&nbsp;</td>";
-  }
+  $aff_legend .= buildLegend($knownlinks, $selected_links, "mobile", $brighten_negative);
   $aff_legend .= "</tr></table>";
-
   $aff_legend .= "</td>";
   $aff_legend .= "</tr>";
   $aff_legend .= "</table>";
 }
 
+$page_title = "AS-Stats | Top " . $ntop . " AS" . ($peerusage ? " peer" : "") . " (" . $label . ")";
+$meta_refresh = '<meta http-equiv="Refresh" content="300">';
+$body_attrs = "";
+include('templates/header.inc.php');
 ?>
-
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta http-equiv="Refresh" content="300">
-  <title>AS-Stats | Top <?php echo $ntop; ?> AS<?php if($peerusage) echo " peer"; ?> (<?php echo $label?>)</title>
-  <link rel="icon" href="favicon.ico" />
-  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
-  <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
-  <link rel="stylesheet" href="plugins/font-awesome/font-awesome.min.css">
-  <link rel="stylesheet" href="plugins/ionicons/ionicons.min.css">
-  <link rel="stylesheet" href="dist/css/AdminLTE.min.css">
-  <link rel="stylesheet" href="dist/css/skins/_all-skins.min.css">
-  <link rel="stylesheet" href="css/custom.css">
-</head>
-<body class="hold-transition skin-black-light sidebar-collapse layout-top-nav fixed">
-
-<div class="wrapper">
 
   <!-- =============================================== -->
   <?php echo menu($selected_links); ?>
@@ -262,14 +144,7 @@ if ( !isMobileDevice() && !isTabletDevice() ) {
   <?php echo footer(); ?>
   <!-- =============================================== -->
 
-</div>
-
-<script src="plugins/jQuery/jquery-2.2.3.min.js"></script>
-<script src="bootstrap/js/bootstrap.min.js"></script>
-<script src="plugins/slimScroll/jquery.slimscroll.min.js"></script>
-<script src="plugins/fastclick/fastclick.min.js"></script>
-<script src="plugins/jQueryUI/jquery-ui.min.js"></script>
-<script src="dist/js/app.min.js"></script>
-
-</body>
-</html>
+<?php
+include('templates/footer.inc.php');
+include('templates/footer_scripts.inc.php');
+?>

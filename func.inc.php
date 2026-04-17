@@ -112,24 +112,26 @@ function getasstats_top($ntop, $statfile, $selected_links, $list_asn = NULL, $v 
 		foreach(getknownlinks() as $link)
 			$selected_links[] = $link['tag'];
 	}
+	$allowed_tags = array_column(getknownlinks(), 'tag');
 	$nlinks = 0;
 	$query_total = '0';
 	$query_links = '';
 	foreach($selected_links as $tag){
+		if (!in_array($tag, $allowed_tags, true)) continue;
 		if ($v == 4 || $v == NULL) {
-			$query_links .= "${tag}_in, ${tag}_out, ";
+			$query_links .= "{$tag}_in, {$tag}_out, ";
 		} else {
-	        	$query_links .=	"${tag}_v6_in, ${tag}_v6_out, ";
+	        	$query_links .=	"{$tag}_v6_in, {$tag}_v6_out, ";
 		}
 		$nlinks += 4;
 		if ($v == 4 || $v == NULL) {
-			$query_total .= " + ${tag}_in + ${tag}_out";
+			$query_total .= " + {$tag}_in + {$tag}_out";
 		} else {
-			$query_total .= " + ${tag}_v6_in + ${tag}_v6_out";
+			$query_total .= " + {$tag}_v6_in + {$tag}_v6_out";
 		}
 	}
   if ( $list_asn ) {
-    $where = implode(",", $list_asn);
+    $where = implode(",", array_map('intval', $list_asn));
     $query = "SELECT asn, $query_links $query_total as total FROM stats WHERE asn IN ( $where ) ORDER BY total desc limit $ntop";
   } else {
 	  $query = "select asn, $query_links $query_total as total from stats order by total desc limit $ntop";
@@ -188,7 +190,7 @@ function getASSET($asset) {
 	# check if file exist and cache
 	$filemtime = file_exists($assetfile) ? filemtime($assetfile) : false;
 	if (!$filemtime or (time() - $filemtime >= $asset_cache_life)) {
-  	$cmd = $whois ." -h whois.radb.net '!i".$asset."'";
+  	$cmd = escapeshellarg($whois) . " -h whois.radb.net " . escapeshellarg("!i" . $asset);
     $return_aslist = explode("\n",shell_exec($cmd));
 
 		/* find the line that contains the AS-SET members */
@@ -389,13 +391,103 @@ function footer() {
   return $footer;
 }
 
+function buildLegend($knownlinks, $selected_links, $device_type, $brighten_negative) {
+	$legend = "<table class='small'>";
+
+	foreach ($knownlinks as $link) {
+		$tag = "link_{$link['tag']}";
+		$checked = '';
+		if(isset($_GET[$tag]) && $_GET[$tag] == 'on') {
+			$checked = 'checked';
+		}
+		$legend .= "<tr><td style=\"border: 4px solid #fff;\">";
+		$legend .= "<table style=\"border-collapse: collapse; margin: 0; padding: 0\"><tr>";
+		if ($brighten_negative) {
+			$legend .= "<td width=\"9\" height=\"18\" style=\"background-color: #{$link['color']}\">&nbsp;</td>";
+			$legend .= "<td width=\"9\" height=\"18\" style=\"opacity: 0.73; background-color: #{$link['color']}\">&nbsp;</td>";
+		} else {
+			$legend .= "<td width=\"18\" height=\"18\" style=\"background-color: #{$link['color']}\">&nbsp;</td>";
+		}
+		$legend .= "</tr></table>";
+
+		if ($device_type == "desktop") {
+			$legend .= "</td><td>&nbsp;" . htmlspecialchars($link['descr'], ENT_QUOTES, 'UTF-8') . "</td>";
+		} else {
+			$legend .= "<td>&nbsp;" . htmlspecialchars($link['descr'], ENT_QUOTES, 'UTF-8') . "&nbsp;</td>\n";
+		}
+
+		$legend .= "<td>&nbsp;<input type='checkbox' name='" . htmlspecialchars($tag, ENT_QUOTES, 'UTF-8') . "' id ='" . htmlspecialchars($tag, ENT_QUOTES, 'UTF-8') . "' ".$checked.($device_type == "mobile" ? ">&nbsp;" : ">") . "</td>";
+		$legend .= "</tr>\n";
+	}
+
+	$legend .= "</table>";
+	return $legend;
+}
+
+function renderASRow($as, $nbytes, $i, $start, $end, $peerusage, $selected_links, $label, $showv6, $customlinks) {
+	$asinfo = getASInfo($as);
+	$class = (($i % 2) == 0) ? "" : "even";
+	$html = '<li class="li-padding '. $class .'">';
+
+	$img_flag = '';
+	$flagfile = '';
+	if ( isset($asinfo['country']) ) $flagfile = "flags/" . strtolower($asinfo['country']) . ".gif";
+	if ($flagfile && file_exists($flagfile)) {
+		$is = getimagesize($flagfile);
+		$img_flag = '<img src="'.$flagfile.'" '.$is[3].'>';
+	}
+
+	$html .= '<div class="row">';
+	$html .= '<div class="col-lg-2">';
+	$html .= '<b>' . $img_flag . ' AS' . $as . ': </b><small><i>' . htmlspecialchars($asinfo['descr'], ENT_QUOTES, 'UTF-8') . '</i></small>';
+
+	$html .= '<div class="small">In the last '. $label . '</div>';
+	$html .= '<div class="small">IPv4: ~ '.format_bytes($nbytes[0]).' in / ' . format_bytes($nbytes[1]) . '</div>';
+	if ($showv6) {
+		$html .= '<div class="small">IPv6: ~ '.format_bytes($nbytes[2]).' in / ' . format_bytes($nbytes[3]) . '</div>';
+	}
+
+	$htmllinks = array();
+	foreach ($customlinks as $linkname => $url) {
+		$url = str_replace("%as%", $as, $url);
+		$htmllinks[] = "<a href=\"" . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . "\" target=\"_blank\">" . htmlspecialchars($linkname) . "</a>\n";
+	}
+	$html .= '<span class="small">' . join(" | ", $htmllinks) . '</span>';
+
+	$html .= '<div class="rank">';
+	$html .= '#' . ($i+1);
+	$html .= '</div>';
+
+	$html .= '</div>';
+
+	if ($showv6) { $col = "5"; } else { $col="10"; }
+	$html .= '<div class="col-lg-'.$col.'">';
+	$html .= '<span class="pull-right">';
+	$html .= getHTMLUrl($as, 4, $asinfo['descr'], $start, $end, $peerusage, $selected_links);
+	$html .= '</span>';
+	$html .= '</div>';
+
+	if ($showv6) {
+		$html .= '<div class="col-lg-5">';
+		$html .= '<span class="pull-right">';
+		$html .= getHTMLUrl($as, 6, $asinfo['descr'], $start, $end, $peerusage, $selected_links);
+		$html .= '</span>';
+		$html .= '</div>';
+	}
+
+	$html .= '</div>';
+	$html .= '</li>';
+
+	return $html;
+}
+
 function content_header($titre, $small) {
 	global $outispositive;
 
   $header = '<section class="content-header">';
   $header .= '<h1>';
-  $header .= $titre;
-  $header .= '<small><i>'. $small .'</i></small>';
+  $header .= htmlspecialchars($titre, ENT_QUOTES, 'UTF-8');
+  $header .= '<small><i>'. htmlspecialchars($small, ENT_QUOTES, 'UTF-8') .'</i></small>';
   $header .= '</h1>';
 
 	if ($outispositive) {

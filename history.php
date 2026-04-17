@@ -9,9 +9,9 @@ if ( isset($_GET['as']) ) {
   $as = str_replace('as','',str_replace(' ','',strtolower($_GET['as'])));
   if ($as) $asinfo = getASInfo($as);
 
-  $title = "AS-Stats | History for AS".$as.": ".$asinfo['descr'];
-  $header = 'History for AS' . $as;
-  $header_small = $asinfo['descr'];
+  $title = "AS-Stats | History for AS" . htmlspecialchars($as, ENT_QUOTES, 'UTF-8') . ": " . htmlspecialchars($asinfo['descr'], ENT_QUOTES, 'UTF-8');
+  $header = 'History for AS' . htmlspecialchars($as, ENT_QUOTES, 'UTF-8');
+  $header_small = htmlspecialchars($asinfo['descr'], ENT_QUOTES, 'UTF-8');
   $select_form = "";
 
   if(isset($_GET['peerusage']) && $_GET['peerusage'] == '1') { $peerusage = 1; }
@@ -35,7 +35,7 @@ if ( isset($_GET['as']) ) {
     $aff_customlinks .= '<div class="list-group list-group-unbordered">';
     foreach ($customlinks as $linkname => $url) {
       $url = str_replace("%as%", $as, $url);
-      $aff_customlinks .= '<a href='.$url.' target="_blank" class="list-group-item"><i class="fa fa-external-link text-blue"></i> ' . htmlspecialchars($linkname) . '</a>';
+      $aff_customlinks .= '<a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '" target="_blank" class="list-group-item"><i class="fa fa-external-link text-blue"></i> ' . htmlspecialchars($linkname) . '</a>';
     }
     $aff_customlinks .= "</div>";
   }
