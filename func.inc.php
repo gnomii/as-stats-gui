@@ -113,11 +113,11 @@ function getasstats_top($ntop, $statfile, $selected_links, $list_asn = NULL, $v 
 			$selected_links[] = $link['tag'];
 	}
 	$allowed_tags = array_column(getknownlinks(), 'tag');
+	$selected_links = array_intersect($selected_links, $allowed_tags);
 	$nlinks = 0;
 	$query_total = '0';
 	$query_links = '';
 	foreach($selected_links as $tag){
-		if (!in_array($tag, $allowed_tags, true)) continue;
 		if ($v == 4 || $v == NULL) {
 			$query_links .= "{$tag}_in, {$tag}_out, ";
 		} else {
